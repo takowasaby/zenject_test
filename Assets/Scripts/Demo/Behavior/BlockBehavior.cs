@@ -6,15 +6,11 @@ using Zenject;
 public class BlockBehavior : MonoBehaviour
 {
     private IBlockManager blockManager;
-    private BallBehaviour ball;
-
     private int blockID;
 
-    [Inject]
-    public void Construct(IBlockManager blockManager, BallBehaviour ball)
+    public void Construct(IBlockManager blockManager)
     {
         this.blockManager = blockManager;
-        this.ball = ball;
     }
 
     void Start()
@@ -22,12 +18,9 @@ public class BlockBehavior : MonoBehaviour
         this.blockID = this.blockManager.AddAndGetID();
     }
 
-    private void OnCollisionEnter(Collision collision)
+    private void OnCollisionEnter(Collision _)
     {
-        if (collision.gameObject.GetInstanceID() == this.ball.GetInstanceID())
-        {
-            this.blockManager.RemoveByID(this.blockID);
-            Destroy(base.gameObject);
-        }
+        this.blockManager.RemoveByID(this.blockID);
+        Destroy(base.gameObject);
     }
 }
