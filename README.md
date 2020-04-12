@@ -1,7 +1,7 @@
 ZenjectTest.cs
 ==
 
-## Zenject チョットワカル Book を読む
+## 「[Zenject チョットワカル Book](https://booth.pm/ja/items/1520608)」を読む
 
 ### DependencyInjection
 
@@ -18,4 +18,137 @@ ZenjectTest.cs
 
 ### Getting Started Zenject
 
+- ZenjectによるDIでは二つのものが必要
+  - 依存関係を保持するDiConstainer
+  - DiConstainerを用いてInjectを行うContext
+- DiContainer
+  - DIコンテナに情報を登録することをBindと呼ぶ
+    - Bindするための方法は二つ
+      - Zenject bindingをアタッチする
+      - Installerにコードを書く
+  - バインドしたオブジェクトを必要としているオブジェクトに渡すことをInjectと呼ぶ
+    - `[Inject]`
+      - 自動的に探されてInjectされる
+- Context
+  - DIコンテナを使ってInjectするやつ
+  - SceneContextはSceneに一つのコンテキスト
+- Injectの種類
+  - フィールドインジェクション
+  - メソッドインジェクション（公式推奨）
+  - プロパティインジェクション
+  - コンストラクタインジェクション（公式推奨）
+    - 循環参照でエラーを出してくれる
 
+### Installer を用いた DI
+
+- Bindの書き方
+
+```
+Container.Bind<ContractType>() // Bind する型の定義
+    .WithId(Identifier) // 固有 ID を設定して識別する
+    .To<ResultType>() // 実際に渡されるインスタンスの型
+    .FromConstructionMethod() // インスタンスをどのように生成す
+    るか
+    .AsScope() // インスタンスを都度作るか、使いま
+    28
+    3.2 Bind の書き方
+    わすか
+    .WithArguments(Arguments) // インスタンス生成時に渡す初期値
+    .OnInstantiated(InstantiatedCallback) // 生成時のコールバック
+    .When(Condition) // Inject 対象を絞るフィルタ
+    .(Copy|Move)Into(All|Direct)SubContainers() // SubContainer での扱い (ほぼ使う
+    ことない)
+    .NonLazy() // 遅延させず即時に生成する
+    .IfNotBound(); // 二重に Bind させない
+```
+
+- Bindするインスタンス
+  - AsTransient()：Injectされるたびにインスタンスが作られる
+  - AsCached()：一つのBindに対して同じインスタンスがInjectされる
+  - AsSingle()：一つのDIコンテナの中で同じインスタンスがInjectされる
+- `NonLazy()`
+  - Inject先がなくても、Bindされたオブジェクト用意する
+- Installerの種類
+  - MonoInstaller：MonoBehaviorを継承したインスペクタ上でパラメータを渡せるInstaller
+  - Installer：static methodでDIコンテナを渡せばバインドしてくれるInstaller
+  - ScriptableObjectInstaller：シーンに依らずインスペクタでパラメータの渡せるInstaller
+  - PrefabInstaller：MonoInstallerがアタッチされたPrefab
+
+### 様々な Bind たち
+
+- `FromResolveGetter<T>(Func<T, T2> getter)`は集約に使えそう
+- WithArguments
+  - 基本的には全部Bindすればよい
+  - 依存関係が単純なときに使う
+- 配列の扱いが難しい
+
+### 動的な Binding
+
+- 動的な
+- PlaceholderFactoryを介してインスタンスを生成する
+  - 生成処理は自動で定義されるか、
+  - Ifactoryを実装したファクトリクラスに委譲できる
+- ファクトリクラスはクラス内クラスとして定義することを推奨している
+- 初期化時以外にオブジェクトの生成を行うなら、オブジェクトの生成のためのファクトリをDIせよ
+
+### シーンを跨ぐ DI
+
+- ZenjectSceneLoader
+  - SceneManagerとだいたい同じ
+  - 第三引数にInstallerみたいにBindが書ける
+  - SceneContextに自動で追加される
+- SceneContext以外のContext
+  - ProjectContext
+    - Resourceフォルダに入れる必要がある
+  - ParentContract
+    - マルチシーンで親子関係があるなら便利
+    - 文字列で名前を付けて関係をInspector上で記述する
+  - SceneDecoratorContext
+    - デコレーターパターン
+    - デコレートされるSceneのDIコンテナに追加でBindしていく
+  - ZenjectSceneLoader.LoadSceneRelationshipでシーン遷移時に親子関係を作ることもできる
+  - ProjectContextは最終手段
+
+## 参考文献まとめ
+
+- チートシート（英語）：https://github.com/modesttree/Zenject/blob/master/Documentation/CheatSheet.md
+- ドキュメント的なもの（英語）：https://github.com/modesttree/Zenject#table-of-contents
+- MultiSceneSetup.cs：https://gist.github.com/svermeulen/8927b29b2bfab4e84c950b6788b0c677
+
+## 「[Zenjectを使うときに気を付けていること](https://adarapata.hatenablog.com/entry/unity-advent-calendar-2019)」を読む
+
+- Validate
+  - Shift+Alt+vでシーン内の依存関係をチェックしてくれる
+- ContainerのInstaller以外での使い道
+  - ファクトリに持たせることでVlidationに巻き込む
+  - IVaridatableで`Validate()`を実装
+    - 実際には生成されないDry-run
+- SubContainer
+  - 同じコンテキストの中で子コンテナとして別のDIコンテナを作る
+  - FromSubContainerResolveでBindをサブコンテナに委譲
+  - サブコンテナはメソッドやインストーラーから作れる
+  - BindするものがMonoBehaviorの場合、PrefabにGameObjectContextをアタッチする
+    - `ByNewContextPrefab()`
+- IInitializable
+  - Initialize()を、オブジェクト構築後に適切に呼び出してくれる
+  - UnityのStartのタイミング
+  - 複雑な初期化ロジックを含めることを想定
+- Decorator Binding
+  - `Container.Decorate<ContractType>().With<DecorateType>()`で、もともとBindされるオブジェクトにDecorateTypeで装飾したものをInjectする
+- Decorator Context
+  - メインとなるSceneのBindを使ってデバッグ用の処理が追加出来る
+  - マルチシーンのロード順に注意
+
+## 公式ドキュメントを読む
+
+- ITickable
+  - Update毎に呼ばれる処理を登録できる
+    - ITickableを継承してTick()を実装する
+    - InstallerでITickableにBindする
+  - IFixedTickableやILateTickableもあるよ
+  - BindExecutionOrderで順番をつけることもできるよ
+
+## デモを作る
+
+- 単純な3Dアクションゲーム
+- 敵のスポーンはやりたい
