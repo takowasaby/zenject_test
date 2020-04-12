@@ -5,9 +5,15 @@ using UniRx;
 using UniRx.Triggers;
 using Zenject;
 
-public class PlayerBehaviour : MonoBehaviour, IInitializable
+
+public interface IPlayer
 {
-    public void Initialize()
+    void SubscribeInput();
+}
+
+public class PlayerBehaviour : MonoBehaviour, IPlayer
+{
+    public void SubscribeInput()
     {
         var everyFrame = Observable.EveryFixedUpdate().Select(_ => Unit.Default);
 
@@ -18,10 +24,5 @@ public class PlayerBehaviour : MonoBehaviour, IInitializable
         everyFrame
             .Where(_ => Input.GetKey(KeyCode.LeftArrow))
             .Subscribe(_ => base.transform.position = base.transform.position + new Vector3(-0.1f, 0f, 0f));
-    }
-
-    void Start()
-    {
-        this.Initialize();
     }
 }
