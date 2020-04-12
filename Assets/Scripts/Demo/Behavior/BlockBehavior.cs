@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
-public class BlockBehavior : MonoBehaviour, IInitializable
+public class BlockBehavior : MonoBehaviour
 {
     private IBlockManager blockManager;
     private BallBehaviour ball;
@@ -17,13 +17,9 @@ public class BlockBehavior : MonoBehaviour, IInitializable
         this.ball = ball;
     }
 
-    public void Initialize()
-    {
-        this.blockID = this.blockManager.AddAndGetID();
-    }
-
     void Start()
     {
+        this.blockID = this.blockManager.AddAndGetID();
     }
 
     private void OnCollisionEnter(Collision collision)
